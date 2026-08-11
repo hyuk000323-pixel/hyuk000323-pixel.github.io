@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>수도권 복합 쇼핑몰 맞춤 탐색기</title>
+    <style>
+        :root {
+            --bg-color: #f4f6f8;
+            --card-bg: #ffffff;
+            --accent-color: #2563eb;
+            --text-primary: #1f2937;
+            --text-secondary: #4b5563;
+            --border-color: #e5e7eb;
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        header {
+            margin-bottom: 20px;
+            text-align: center;
+            position: relative;
+        }
+        header h1 {
+            font-size: 1.8rem;
+            margin-bottom: 8px;
+        }
+        header p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            margin-bottom: 12px;
+        }
+        .header-btns {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+        .info-btn, .toggle-filter-btn {
+            background-color: #ffffff;
+            color: var(--accent-color);
+            border: 1px solid var(--accent-color);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .info-btn:hover, .toggle-filter-btn:hover {
+            background-color: var(--accent-color);
+            color: #ffffff;
+        }
+        .container {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 20px;
+            align-items: start;
+        }
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+        /* 접이식 필터 패널 */
+        .control-panel {
+            background-color: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+        .control-panel.collapsed .panel-content {
+            display: none;
+        }
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+        .panel-header h2 {
+            font-size: 1.1rem;
+        }
+        .panel-content {
+            margin-top: 16px;
+        }
+        .panel-section {
+            margin-bottom: 20px;
+        }
+        .panel-section h3 {
+            font-size: 0.95rem;
+            margin-bottom: 10px;
+            padding-bottom: 4px;
+            border-bottom: 2px solid var(--accent-color);
+        }
+        .category-title {
+            font-size: 0.8rem;
+            font-weight: bold;
+            color: var(--text-secondary);
+            margin: 8px 0 6px 0;
+        }
+        .rank-select-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+        }
+        .rank-select-item select {
+            width: 60%;
+            padding: 5px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+        }
+        .brand-filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            background-color: #f3f4f6;
+            padding: 5px 9px;
+            border-radius: 16px;
+            font-size: 0.78rem;
+            cursor: pointer;
+            border: 1px solid var(--border-color);
+            user-select: none;
+        }
+        .chip.active {
+            background-color: var(--accent-color);
+            color: white;
+            border-color: var(--accent-color);
+        }
+        /* 쇼핑몰 카드 리스트 */
+        .mall-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .mall-card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .mall-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+        .title-area {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .mall-logo {
+            width: 42px;
+            height: 42px;
+            border-radius: 8px;
+            background-color: #1e293b;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.75rem;
+            text-align: center;
+            padding: 2px;
+            flex-shrink: 0;
+        }
+        .mall-title {
+            font-size: 1.25rem;
+            font-weight: bold;
+        }
+        .mall-region {
+            font-size: 0.8rem;
+            background-color: #eef2ff;
+            color: var(--accent-color);
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin-left: 6px;
+        }
+        .score-badge {
+            background-color: #eff6ff;
+            color: var(--accent-color);
+            font-weight: bold;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            white-space: nowrap;
+        }
+        .theme-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-top: 4px;
+        }
+        .theme-tag {
+            font-size: 0.72rem;
+            color: #059669;
+            background-color: #ecfdf5;
+            border: 1px solid #a7f3d0;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+        .mall-metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+            gap: 8px;
+            background-color: #f9fafb;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 0.82rem;
+        }
+        .metric-item span {
+            display: block;
+            color: var(--text-secondary);
+            font-size: 0.72rem;
+            margin-bottom: 2px;
+        }
+        .traffic-info-box {
+            background-color: #f8fafc;
+            border: 1px dashed var(--border-color);
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: space-between;
+        }
+        .traffic-item strong {
+            color: var(--text-primary);
+        }
+        .subway-badge {
+            display: inline-block;
+            padding: 1px 6px;
+            border-radius: 3px;
+            font-size: 0.72rem;
+            font-weight: bold;
+        }
+        .subway-yes { background-color: #dcfce7; color: #166534; }
+        .subway-no { background-color: #fee2e2; color: #991b1b; }
+        .brands-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .brand-tag {
+            background-color: #f3f4f6;
+            color: #374151;
+            font-size: 0.75rem;
+            padding: 3px 8px;
+            border-radius: 4px;
+        }
+        .brand-tag.highlight {
+            background-color: #dbeafe;
+            color: var(--accent-color);
+            font-weight: bold;
+        }
+        .mall-desc {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+        .no-result {
+            text-align: center;
+            padding: 40px;
+            background: white;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+        .reset-btn {
+            margin-top: 12px;
+            padding: 8px 16px;
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        /* 모달 팝업 스타일 */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .modal-content {
+            background-color: #ffffff;
+            border-radius: 12px;
+            max-width: 650px;
+            width: 100%;
+            max-height: 85vh;
+            overflow-y: auto;
+            padding: 24px;
+            position: relative;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .modal-header h2 { font-size: 1.2rem; }
+        .close-btn {
+            background: none; border: none;
+            font-size: 1.5rem; cursor: pointer;
+            color: var(--text-secondary);
+        }
+        .guide-section { margin-bottom: 18px; }
+        .guide-section h4 { font-size: 0.95rem; color: var(--accent-color); margin-bottom: 6px; }
+        .guide-section ul { list-style: none; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5; }
+        .guide-section ul li { margin-bottom: 4px; padding-left: 12px; position: relative; }
+        .guide-section ul li::before { content: "•"; position: absolute; left: 0; color: var(--accent-color); }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>수도권 복합 쇼핑몰 맞춤 탐색기</h1>
+        <p>필수 입점 브랜드와 주차/교통 조건 및 우선순위에 따른 최적의 쇼핑몰 탐색</p>
+        <div class="header-btns">
+            <button class="toggle-filter-btn" onclick="toggleFilterPanel()">🔍 필터 접기/열기</button>
+            <button class="info-btn" onclick="openModal()">💡 점수 산정 기준 보기</button>
+        </div>
+    </header>
+    <div class="container">
+        <!-- 접이식 검색 패널 -->
+        <aside class="control-panel" id="controlPanel">
+            <div class="panel-header" onclick="toggleFilterPanel()">
+                <h2>⚙️ 맞춤 검색 필터</h2>
+                <span id="toggleIcon">▲</span>
+            </div>
+            <div class="panel-content">
+                <div class="panel-section">
+                    <h3>우선순위 선택</h3>
+                    <div class="rank-select-item">
+                        <label>1순위</label>
+                        <select id="rank1" onchange="handleRankChange(1)">
+                            <option value="navEase">길찾기 편의성</option>
+                            <option value="quietness">여유로움 (안봐빈)</option>
+                            <option value="foodRating">맛집/카페 충실도</option>
+                        </select>
+                    </div>
+                    <div class="rank-select-item">
+                        <label>2순위</label>
+                        <select id="rank2" onchange="handleRankChange(2)">
+                            <option value="quietness">여유로움 (안봐빈)</option>
+                            <option value="navEase">길찾기 편의성</option>
+                            <option value="foodRating">맛집/카페 충실도</option>
+                        </select>
+                    </div>
+                    <div class="rank-select-item">
+                        <label>3순위</label>
+                        <select id="rank3" onchange="handleRankChange(3)">
+                              <option value="foodRating">맛집/카페 충실도</option>
+                            <option value="navEase">길찾기 편의성</option>
+                            <option value="quietness">여유로움 (안봐빈)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="panel-section">
+                    <h3>필수 입점 매장 (전부 포함)</h3>
+
+                    <div class="category-title">쇼핑 / 스팏</div>
+                    <div class="brand-filters" id="shoppingFilters"></div>
+                    <div class="category-title">음식점 / 카페</div>
+                    <div class="brand-filters" id="foodFilters"></div>
+                </div>
+            </div>
+        </aside>
+        <main class="mall-list" id="mallList"></main>
+    </div>
+    <!-- 점수 산정 기준 모달 -->
+    <div class="modal-overlay" id="guideModal" onclick="closeModalOnOuterClick(event)">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>쇼핑몰 평가 지표 산정 기준</h2>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="guide-section">
+                <h4>🧭 길찾기 편의성 (5.0 만점)</h4>
+                <ul>
+                    <li><strong>4.5~5.0점 (일자형/단순 수평 동선):</strong> 중앙 복도를 중심으로 시야가 트여 있어 초행길에도 동선 파악이 매우 쉽음</li>
+                    <li><strong>3.5~4.4점 (순환형/보이드 구조):</strong> 중정을 둘러싸 순환 구조로 현재 위치 파악이 용이함</li>
+                    <li><strong>2.5~3.4점 (수직 다층/다동 분리):</strong> 동관/서관 등 구역이 나뉘어 있거나 층수가 높아 수직 이동이 잦음</li>
+                    <li><strong>1.0~2.4점 (지하 격자형/복합 미로형):</strong> 지하 통로가 격자형으로 복잡하게 얽혀 있어 길을 잃기 쉽음</li>
+                </ul>
+            </div>
+            <div class="guide-section">
+                <h4>🌿 여유로움 / 안봐빈 (5.0 만점)</h4>
+                <ul>
+                    <li><strong>4.0~5.0점 (여유로움):</strong> 주말 피크타임(13~17시) 기준 주차 진입 대기가 거의 없고 통행 복도가 매우 쿌적함</li>
+                    <li><strong>3.0~3.9점 (보통):</strong> 식당가 대기는 일부 발생 하나 보행 및 이동에 큰 불편이 없는 수준</li>
+                    <li><strong>2.0~2.9점 (혼잡):</strong> 주차 진입에 30분 이상 소요되며 F&B 매장 웹이팅이 길게 형성됨</li>
+                    <li><strong>1.0~1.9점 (극심한 혼잡):</strong> 에스컬레이터/엘리베이터 이동 시에도 대기가 필요할 정도로 인파가 밀집함</li>
+                </ul>
+            </div>
+            <div class="guide-section">
+                <h4>🍔 맛집 / 카페 충실도 (5.0 만점)</h4>
+                <ul>
+                    <li><strong>4.5~5.0점:</strong> 파이브가이즈, 쉰이크쉱 등 글로벌 핵플 F&B 및 유명 팝업/카페 라인업 보유</li>
+                    <li><strong>3.5~4.4점:</strong> 대중적인 프랜차이즈 및 외식 브랜드가 다양하게 갖춰진 수준</li>
+                    <li><strong>1.0~3.4점:</strong> 푸드코트 위주의 기본적인 F&B 라인업</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <script>
+        const shoppingBrands = ["다이소", "무인양품", "데카트론", "건담베이스", "토이저러스", "일렉트로마트", "괿즈샵", "애플스토어"];
+        const foodBrands = ["쉰이크쉱", "파이브가이즈", "아웃백", "크리스피프레시", "땅땅", "런던베이글뫤지엄", "호우섬"];
+        // 쇼핑몰 상세 데이터 (로고, 테마 태그, 주차/대중교통 정보 포함)
+        const rawMalls = [
+            {
+                id: 1, name: "롯데월드몰", logoText: "LOTTE", regionText: "서울 송파구", scale: "244,000㎡",
+                navEase: 2.5, quietness: 1.5, foodRating: 4.9,
+                parkingCrowd: "매우 혼잡 (주말 30분+ 대기)", freeParkingRule: "최소 1만원 이상 시 할인 (10분당 500~800원)",
+                subwayDirect: true, subwayStation: "잠실역 (2, 8호선)",
+                themes: ["#서브컴처성지", "#초대형아쿠아리움", "#데이트코스", "#핵플식당가"],
+                brands: ["다이소", "무인양품", "토이저러스", "괿즈샵", "애플스토어", "쉰이크쉱", "런던베이글뫤지엄", "땅땅"],
+                description: "런던베이글뫤지엄, 쉰이크쉱 등 핵플 F&B와 서브컴처 매장이 집약되어 있으나 주말 혼재도 높음."
+            },
+            {
+                id: 2, name: "김포공항 롯데몰", logoText: "LOTTE", regionText: "서울 강서구", scale: "314,000㎡",
+                navEase: 4.2, quietness: 3.0, foodRating: 4.0,
+                parkingCrowd: "보통~원활", freeParkingRule: "1/3/5/10/30만원 구매 시 1/2/3/6/12시간 무료",
+                subwayDirect: true, subwayStation: "김포공항역 (5, 9호선, 공항철도, 김포골드, 서해선)",
+                themes: ["#야외공원연결", "#공항직결", "#쿌적한동선", "#가족나들이"],
+                brands: ["다이소", "무인양품", "토이저러스", "일렉트로마트", "아웃백", "땅땅"],
+                description: "지하철 연계가 뛰어나고 수평 동선이 직관적이며 야외 공원이 있어 쿌적함."
+            },
+            {
+                id: 3, name: "스타필드 하남", logoText: "STARFIELD", regionText: "경기 하남시", scale: "460,000㎡",
+                navEase: 4.5, quietness: 2.0, foodRating: 4.6,
+                parkingCrowd: "주말 진입 혼잡", freeParkingRule: "주차 요금 완전 무료",
+                subwayDirect: false, subwayStation: "하남검단산역 (5호선 도보 10분)",
+                themes: ["#무료주차", "#반려동물동반", "#일자형동선", "#아쿠아필드"],
+                brands: ["다이소", "데카트론", "일렉트로마트", "토이저러스", "애플스토어", "쉰이크쉱", "파이브가이즈", "아웃백"],
+                description: "파이브가이즈, 쉰이크쉱 입점. 무료 주차가 가능하며 일자형 동선 구조로 길찾기가 매우 쉽음."
+            },
+            {
+                id: 4, name: "스타필드 고양", logoText: "STARFIELD", regionText: "경기 고양시", scale: "364,000㎡",
+                navEase: 4.0, quietness: 2.5, foodRating: 4.4,
+                parkingCrowd: "주말 진입 혼잡", freeParkingRule: "주차 요금 완전 무료",
+                subwayDirect: false, subwayStation: "삼송역 (3호선 도보 8분)",
+                themes: ["#무료주차", "#반려동물동반", "#키즈특화", "#엔터테인먼트"],
+                brands: ["다이소", "무인양품", "데카트론", "일렉트로마트", "건담베이스", "토이저러스", "쉰이크쉱", "아웃백", "호우섬"],
+                description: "엔터테인먼트, 키뎌트, 유명 맛집이 균형 있게 갖춰진 수도권 북부 대표 쇼핑몰."
+            },
+            {
+                id: 5, name: "아이파크몰 용산", logoText: "IPARK", regionText: "서울 용산구", scale: "270,000㎡",
+                navEase: 2.0, quietness: 2.0, foodRating: 4.7,
+                parkingCrowd: "혼잡", freeParkingRule: "1/3/5/15만원 구매 시 1/2/3/5시간 무료",
+                subwayDirect: true, subwayStation: "용산역 (1호선, 경의중앙선, KTX)",
+                themes: ["#덕질성지", "#용아맥", "#교통의중심", "#키뎌트천국"],
+                brands: ["다이소", "건담베이스", "괿즈샵", "애플스토어", "무인양품", "쉰이크쉱", "아웃백", "크리스피프레시", "호우섬"],
+                description: "건담베이스 및 괿즈 스팟과 인기 맛집 라인업이 매우 우수하나 동선 구역이 분리되어 있음."
+            },
+            {
+                id: 6, name: "영등포 타임스퀴어", logoText: "TIMES", regionText: "서울 영등포구", scale: "370,000㎡",
+                navEase: 3.8, quietness: 2.0, foodRating: 4.4,
+                parkingCrowd: "혼잡 (주말 진입대기 길음)", freeParkingRule: "1/3/5만원 구매 시 30분/1시간/2시간 무료",
+                subwayDirect: true, subwayStation: "영등포역 (1호선 지하상가 연결)",
+                themes: ["#중앙광장", "#실내데이트", "#지하철연결", "#대형영화관"],
+                brands: ["다이소", "무인양품", "일렉트로마트", "애플스토어", "쉰이크쉱", "아웃백", "땅땅"],
+                description: "중앙 보이드 구조로 동선 파악이 쉽으며 대중교통 접근성과 식당가 구성이 알참."
+            },
+            {
+                id: 7, name: "더현대 서울", logoText: "HYUNDAI", regionText: "서울 영등포구", scale: "89,100㎡",
+                navEase: 3.5, quietness: 1.0, foodRating: 5.0,
+                parkingCrowd: "극심한 혼잡", freeParkingRule: "5/10/15만원 구매 시 1/2/3시간 무료",
+                subwayDirect: true, subwayStation: "여의도역 (5, 9호선 지하통로 연결)",
+                themes: ["#팝업스토어성지", "#사운즈포레스트", "#MZ트렌드", "#미식의중심"],
+                brands: ["괿즈샵", "애플스토어", "파이브가이즈", "크리스피프레시", "호우섬"],
+                description: "파이브가이즈, 호우섬 등 최신 트렌디 F&B의 성지이나 주말 방문객 혼잡도가 극심함."
+            },
+            {
+                id: 8, name: "스타필드 안성", logoText: "STARFIELD", regionText: "경기 안성시", scale: "240,000㎡",
+                navEase: 4.3, quietness: 3.5, foodRating: 4.1,
+                parkingCrowd: "보통 (주차장 매우 넓음)", freeParkingRule: "주차 요금 완전 무료",
+                subwayDirect: false, subwayStation: "대중교통 버스 이용 권장",
+                themes: ["#무료주차", "#원스톱쇼핑", "#쿌적한주차", "#패밀리특화"],
+                brands: ["다이소", "무인양품", "데카트론", "일렉트로마트", "토이저러스", "쉰이크쉱", "아웃백"],
+                description: "동선이 단순하고 주차 공간이 넘넘하며 쿌적한 경기 남부 패밀리형 쇼핑몰."
+            },
+            {
+                id: 9, name: "수원 타임빌라스", logoText: "LOTTE", regionText: "경기 수원시", scale: "234,000㎡",
+                navEase: 3.7, quietness: 2.8, foodRating: 4.5,
+                parkingCrowd: "혼잡", freeParkingRule: "1/3/5/7만원 구매 시 1/2/3/4시간 무료",
+                subwayDirect: true, subwayStation: "수원역 (1호선, 수인분당선)",
+                themes: ["#수원핫플", "#프리미엄리뉴얼", "#지하철직결", "#다양한F&B"],
+                brands: ["다이소", "무인양품", "토이저러스", "애플스토어", "파이브가이즈", "땅땅", "호우섬"],
+                description: "최근 프리미엄 리뉴얼로 파이브가이즈 등 핫한 F&B 브랜드가 다수 입점함."
+            },
+            {
+                id: 10, name: "코엑스몰 (스타필드)", logoText: "STARFIELD", regionText: "서울 강남구", scale: "135,000㎡",
+                navEase: 1.8, quietness: 2.2, foodRating: 4.3,
+                parkingCrowd: "혼잡 (주차비 비쁖)", freeParkingRule: "5/10/15만원 구매 시 1/2/3시간 무료",
+                subwayDirect: true, subwayStation: "삼성역 (2호선), 봉은사역 (9호선)",
+                themes: ["#별마당도서관", "#강남중심", "#전시회연계", "#지하복합몰"],
+                brands: ["다이소", "무인양품", "건담베이스", "애플스토어", "쉰이크쉱", "아웃백", "호우섬"],
+                description: "지하 미로형 구조로 길찾기는 다소 어려우나 별마당 도서관 및 식당가 접근성이 뛰어남."
+            }
+        ];
+        let selectedBrands = new Set();
+        function init() {
+            renderBrandFilters();
+            updateList();
+        }
+        function toggleFilterPanel() {
+            const panel = document.getElementById('controlPanel');
+            const icon = document.getElementById('toggleIcon');
+            panel.classList.toggle('collapsed');
+            icon.innerText = panel.classList.contains('collapsed') ? '▼' : '▲';
+        }
+        function openModal() { document.getElementById('guideModal').style.display = 'flex'; }
+        function closeModal() { document.getElementById('guideModal').style.display = 'none'; }
+        function closeModalOnOuterClick(e) { if (e.target.id === 'guideModal') closeModal(); }
+        function renderBrandFilters() {
+            const shopContainer = document.getElementById('shoppingFilters');
+            shopContainer.innerHTML = shoppingBrands.map(b => `<div class="chip" data-brand="${b}">${b}</div>`).join('');
+            const foodContainer = document.getElementById('foodFilters');
+            foodContainer.innerHTML = foodBrands.map(b => `<div class="chip" data-brand="${b}">${b}</div>`).join('');
+            document.querySelectorAll('.chip').forEach(chip => {
+                chip.addEventListener('click', () => {
+                    const brand = chip.dataset.brand;
+                    if (selectedBrands.has(brand)) {
+                        selectedBrands.delete(brand);
+                        chip.classList.remove('active');
+                    } else {
+                        selectedBrands.add(brand);
+                        chip.classList.add('active');
+                    }
+                    updateList();
+                });
+            });
+        }
+        function handleRankChange(changedRank) {
+            const r1 = document.getElementById('rank1');
+            const r2 = document.getElementById('rank2');
+            const r3 = document.getElementById('rank3');
+            if (changedRank === 1) {
+                if (r1.value === r2.value) r2.value = getRemaining([r1.value, r3.value]);
+                if (r1.value === r3.value) r3.value = getRemaining([r1.value, r2.value]);
+            } else if (changedRank === 2) {
+                if (r2.value === r1.value) r1.value = getRemaining([r2.value, r3.value]);
+                if (r2.value === r3.value) r3.value = getRemaining([r1.value, r3.value]);
+            } else if (changedRank === 3) {
+                if (r3.value === r1.value) r1.value = getRemaining([r3.value, r2.value]);
+                if (r3.value === r2.value) r2.value = getRemaining([r3.value, r1.value]);
+            }
+            updateList();
+        }
+        function getRemaining(used) {
+            const all = ["navEase", "quietness", "foodRating"];
+            return all.find(item => !used.includes(item));
+        }
+        function resetFilters() {
+            selectedBrands.clear();
+            document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+            updateList();
+        }
+        function updateList() {
+            const rank1 = document.getElementById('rank1').value;
+            const rank2 = document.getElementById('rank2').value;
+            const rank3 = document.getElementById('rank3').value;
+            const weights = {};
+            weights[rank1] = 0.50;
+            weights[rank2] = 0.35;
+            weights[rank3] = 0.15;
+            let filtered = rawMalls.filter(mall => {
+                for (let brand of selectedBrands) {
+                    if (!mall.brands.includes(brand)) return false;
+                }
+                return true;
+            });
+            filtered.forEach(mall => {
+                const score = (mall.navEase * weights.navEase) +
+                              (mall.quietness * weights.quietness) +
+                              (mall.foodRating * weights.foodRating);
+                mall.calculatedScore = score.toFixed(1);
+            });
+            filtered.sort((a, b) => b.calculatedScore - a.calculatedScore);
+            renderMallList(filtered);
+        }
+        function renderMallList(malls) {
+            const container = document.getElementById('mallList');
+
+            if (malls.length === 0) {
+                container.innerHTML = `
+                    <div class="no-result">
+                        <p>선택하신 필수 입점 매장을 모두 포함하는 쇼핑몰이 없습니다.</p>
+                        <button class="reset-btn" onclick="resetFilters()">필터 초기화하기</button>
+                    </div>`;
+                return;
+            }
+            container.innerHTML = malls.map((mall, index) => `
+                <div class="mall-card">
+                    <div class="mall-header">
+                        <div class="title-area">
+                            <div class="mall-logo">${mall.logoText}</div>
+                            <div>
+                                <div>
+                                    <span class="mall-title">${index + 1}. ${mall.name}</span>
+                                    <span class="mall-region">${mall.regionText}</span>
+                                </div>
+                                <div class="theme-tags">
+                                    ${mall.themes.map(t => `<span class="theme-tag">${t}</span>`).join('')}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="score-badge">추천 점수: ${mall.calculatedScore} / 5.0</div>
+                    </div>
+
+                    <p class="mall-desc">${mall.description}</p>
+                    <div class="mall-metrics">
+                        <div class="metric-item">
+                            <span>연면적 (규모)</span>
+                            <strong>${mall.scale}</strong>
+                        </div>
+                        <div class="metric-item">
+                            <span>길찾기 편의성</span>
+                            <strong>${mall.navEase} / 5.0</strong>
+                        </div>
+                        <div class="metric-item">
+                            <span>여유로움 (안봐빈)</span>
+                            <strong>${mall.quietness} / 5.0</strong>
+                        </div>
+                        <div class="metric-item">
+                            <span>맛집/카페 점수</span>
+                            <strong>${mall.foodRating} / 5.0</strong>
+                        </div>
+                    </div>
+                    <!-- 주차 및 교통정보 영역 -->
+                    <div class="traffic-info-box">
+                        <div class="traffic-item">
+                            🚗 <strong>주차 번잡도:</strong> ${mall.parkingCrowd}
+                        </div>
+                        <div class="traffic-item">
+                            💳 <strong>무료 주차 기준:</strong> ${mall.freeParkingRule}
+                        </div>
+                        <div class="traffic-item">
+                            🚇 <strong>지하철 직결:</strong>
+                            <span class="subway-badge ${mall.subwayDirect ? 'subway-yes' : 'subway-no'}">
+                                ${mall.subwayDirect ? '직결 있음' : '직결 없음'}
+                            </span>
+                            (${mall.subwayStation})
+                        </div>
+                    </div>
+                    <div>
+                        <span style="font-size:0.75rem; color:var(--text-secondary); display:block; margin-bottom:4px;">입점한 주요 스팟/음식점</span>
+                        <div class="brands-container">
+                            ${mall.brands.map(b => `
+                                <span class="brand-tag ${selectedBrands.has(b) ? 'highlight' : ''}">${b}</span>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        init();
+    </script>
+</body>
+</html>
